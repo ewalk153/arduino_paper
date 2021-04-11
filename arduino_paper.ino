@@ -10,29 +10,26 @@
 
 GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT> display(GxEPD2_154_D67(/*CS=15*/ 13, /*DC=4*/ 12, /*RST=2*/ 4, /*BUSY=5*/ 2));
 
-void setup() {
-  display.init();
-  Serial.begin(115200);
-  wifiConnect();
-}
-
 const char* ssid = SSID;
 const char* password = PASSWORD;
 const char* url = TEMP_URL;
 
 // delay 20 min
-const unsigned long postingInterval = 20L * 60L * 1000L; // delay between updates, in milliseconds
-unsigned long lastConnectionTime = -postingInterval;
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  60*20    /* Time ESP32 will go to sleep (in seconds) */
 
-void loop() {
+void setup() {
+  display.init();
+  Serial.begin(115200);
+  wifiConnect();
   Serial.println("Starting request");
-
-  if (millis() - lastConnectionTime > postingInterval) {
-    httpRequest();
-  } else {
-    delay(5 * 60 * 1000L); // wait 5 min and try again
-  }
+  httpRequest();
+  Serial.println("sleeping");
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  esp_deep_sleep_start();
 }
+
+void loop() {}
 
 void wifiConnect() {
   Serial.print("Connecting to ");
@@ -93,8 +90,6 @@ void httpRequest() {
       writeMessage(doc["data"]);
       Serial.print("Temp measured at: ");
       Serial.println(doc["created_at"]);
-
-      lastConnectionTime = millis();
     } else {
       Serial.println("Error on HTTP request");
     }
