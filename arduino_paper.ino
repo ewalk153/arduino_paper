@@ -2,6 +2,9 @@
 #include <GxEPD2_3C.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
 
+#include <Fonts/FreeSansBold18pt7b.h>
+#include <Fonts/FreeSansBold24pt7b.h>
+
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
@@ -18,12 +21,14 @@ const char* url = TEMP_URL;
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  60*20    /* Time ESP32 will go to sleep (in seconds) */
 
+
 void setup() {
   display.init();
   Serial.begin(115200);
   wifiConnect();
   Serial.println("Starting request");
   httpRequest();
+//  writeMessage2("23.2", "2021-04-11T13:33:37.332Z");
   Serial.println("sleeping");
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   esp_deep_sleep_start();
@@ -70,6 +75,27 @@ void writeMessage(const char message[]) {
   display.hibernate();
 }
 
+void writeMessage2(double temperature, const char time[]) {
+  uint16_t middleY = display.height() / 2;
+  display.firstPage();
+  do {
+      display.setRotation(3);
+      display.fillScreen(GxEPD_WHITE);
+      display.setTextColor(GxEPD_BLACK);
+      display.setFont(&FreeSansBold24pt7b);
+      display.setTextSize(2);
+      display.setCursor(8, 72);
+      display.print(temperature, 1);
+//      display.print(temperature);
+      display.setFont(&FreeMonoBold9pt7b);
+      display.setTextSize(1);
+      display.setCursor(8, 146);
+      display.print(time);
+  } while (display.nextPage());
+
+  display.hibernate();
+}
+
 // this method makes a HTTP connection to the server:
 void httpRequest() {
   if ((WiFi.status() == WL_CONNECTED)) { //Check the current connection status
@@ -87,9 +113,9 @@ void httpRequest() {
 
       JSONVar doc = JSON.parse(payload);
 
-      writeMessage(doc["data"]);
+      writeMessage2((double)doc["temperature"], doc["local_time"]);
       Serial.print("Temp measured at: ");
-      Serial.println(doc["created_at"]);
+      Serial.println(doc["local_time"]);
     } else {
       Serial.println("Error on HTTP request");
     }
