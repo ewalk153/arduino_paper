@@ -103,6 +103,7 @@ void httpRequest() {
     HTTPClient http;
 
     http.begin(url, null); //Specify the URL
+    http.addHeader("secret", SECRET);
     int httpCode = http.GET();                                        //Make the request
 
     if (httpCode > 0) { //Check for the returning code
