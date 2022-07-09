@@ -1,4 +1,4 @@
 #define SSID "EXAMPLE"
 #define PASSWORD "EXAMPLEPASS"
-#define TEMP_URL "https://example.com/last.json?client_id=5"
-#define SECRET "ABC123"
+#define TEMP_URL "http://homeassistant.local:8123/api/states/sensor.office_temperature"
+#define SECRET "Bearer eyJ0eXAiOiJK..."
