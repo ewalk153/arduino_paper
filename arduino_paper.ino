@@ -19,7 +19,7 @@ const char* url = TEMP_URL;
 
 // delay 20 min
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  (60*20)    /* Time ESP32 will go to sleep (in seconds) */
+#define TIME_TO_SLEEP  (60*5)    /* Time ESP32 will go to sleep (in seconds) */
 
 
 void setup() {
@@ -75,7 +75,7 @@ void writeMessage(const char message[]) {
   display.hibernate();
 }
 
-void writeMessage2(double temperature, const char time[]) {
+void writeMessage2(const char temperature[], const char time[]) {
   uint16_t middleY = display.height() / 2;
   display.firstPage();
   do {
@@ -85,7 +85,7 @@ void writeMessage2(double temperature, const char time[]) {
       display.setFont(&FreeSansBold24pt7b);
       display.setTextSize(2);
       display.setCursor(8, 72);
-      display.print(temperature, 1);
+      display.print(temperature);
 //      display.print(temperature);
       display.setFont(&FreeMonoBold9pt7b);
       display.setTextSize(1);
@@ -102,8 +102,11 @@ void httpRequest() {
 
     HTTPClient http;
 
-    http.begin(url, null); //Specify the URL
-    http.addHeader("secret", SECRET);
+    http.begin(url); //Specify the URL
+    //http.begin(url, null); //https version
+    
+    http.addHeader("Authorization", SECRET);
+    http.addHeader("Content-Type", "application/json");
     int httpCode = http.GET();                                        //Make the request
 
     if (httpCode > 0) { //Check for the returning code
@@ -114,11 +117,14 @@ void httpRequest() {
 
       JSONVar doc = JSON.parse(payload);
 
-      writeMessage2((double)doc["temperature"], doc["local_time"]);
+      writeMessage2(doc["state"], doc["last_updated"]);
       Serial.print("Temp measured at: ");
       Serial.println(doc["local_time"]);
     } else {
       Serial.println("Error on HTTP request");
+      Serial.println(httpCode);
+      String payload = http.getString();
+      Serial.println(payload);
     }
     http.end(); //Free the resources
   }
